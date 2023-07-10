@@ -36,6 +36,7 @@ import (
 	functionLogger "github.com/fission/fission/pkg/logger"
 	mqt "github.com/fission/fission/pkg/mqtrigger"
 	"github.com/fission/fission/pkg/router"
+	"github.com/fission/fission/pkg/agent"
 	"github.com/fission/fission/pkg/storagesvc"
 	"github.com/fission/fission/pkg/timer"
 	"github.com/fission/fission/pkg/utils/loggerfactory"
@@ -50,6 +51,10 @@ func runController(ctx context.Context, logger *zap.Logger, port int) {
 
 func runRouter(ctx context.Context, logger *zap.Logger, port int, executorUrl string) {
 	router.Start(ctx, logger, port, executorUrl)
+}
+
+func runAgent(ctx context.Context, logger *zap.Logger, port int, executorUrl string) {
+	agent.Start(ctx, logger, port, executorUrl)
 }
 
 func runExecutor(ctx context.Context, logger *zap.Logger, port int, functionNamespace, envBuilderNamespace string) error {
@@ -123,6 +128,8 @@ func getServiceName(arguments map[string]interface{}) string {
 		serviceName = "Fission-StorageSvc"
 	} else if arguments["--mqt_keda"] == true {
 		serviceName = "Fission-Keda-MQTrigger"
+	}else if arguments["--agentPort"] != nil{
+		serviceName = "Fission-Agent"
 	}
 
 	return serviceName
@@ -236,6 +243,13 @@ Options:
 		port := getPort(logger, arguments["--routerPort"])
 		runRouter(ctx, logger, port, executorUrl)
 		logger.Error("router exited")
+		return
+	}
+
+	if arguments["--agentPort"] != nil {
+		port := getPort(logger, arguments["--agentPort"])
+		runAgent(ctx, logger, port, executorUrl)
+		logger.Error("agent exited")
 		return
 	}
 

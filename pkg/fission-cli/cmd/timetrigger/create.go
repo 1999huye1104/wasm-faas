@@ -54,6 +54,7 @@ func (opts *CreateSubCommand) do(input cli.Input) error {
 }
 
 func (opts *CreateSubCommand) complete(input cli.Input) error {
+	
 	name := input.String(flagkey.TtName)
 	if len(name) == 0 {
 		id, err := uuid.NewV4()

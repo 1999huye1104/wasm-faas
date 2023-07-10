@@ -61,6 +61,13 @@ const (
 	ExecutorTypeNewdeploy ExecutorType = "newdeploy"
 	ExecutorTypeContainer ExecutorType = "container"
 	ExecutorTypeWasm      ExecutorType = "wasm"
+	ExecutorTypeWasmShortA      ExecutorType = "wasmshorta"
+	ExecutorTypeWasmShortS      ExecutorType = "wasmshorts"
+)
+
+const(
+    FnCallMethodSync    string ="sync"
+	FnCallMethodAsync    string ="async"
 )
 
 const (

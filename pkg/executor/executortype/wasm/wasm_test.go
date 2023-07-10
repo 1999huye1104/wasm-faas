@@ -53,14 +53,14 @@ func TestFnCreate(t *testing.T){
 	}
 
 	deployInformer := wasmInformerFactory.Apps().V1().Deployments()
-	svcInformer := wasmInformerFactory.Core().V1().Services()
-	
+	svcInformer := wasmInformerFactory.Core().V1().Services()	
+	Jobnformer := wasmInformerFactory.Batch().V1().Jobs()
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
     //创建wasm组件
-	executor, err := MakeWasm(ctx, logger, fissionClient, kubernetesClient, functionNamespace,"test",funcInformer, deployInformer,svcInformer)
+	executor, err := MakeWasm(ctx, logger, fissionClient, kubernetesClient, functionNamespace,"test",funcInformer, Jobnformer,deployInformer,svcInformer)
 	if err != nil {
 		t.Fatalf("new deploy manager creation failed: %s", err)
 	}
@@ -210,13 +210,13 @@ func TestFnDelete(t *testing.T){
 
 	deployInformer := wasmInformerFactory.Apps().V1().Deployments()
 	svcInformer := wasmInformerFactory.Core().V1().Services()
-	
+	Jobnformer := wasmInformerFactory.Batch().V1().Jobs()
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
     //创建wasm组件
-	executor, err := MakeWasm(ctx, logger, fissionClient, kubernetesClient, functionNamespace,"test",funcInformer, deployInformer,svcInformer)
+	executor, err := MakeWasm(ctx, logger, fissionClient, kubernetesClient, functionNamespace,"test",funcInformer, Jobnformer,deployInformer,svcInformer)
 	if err != nil {
 		t.Fatalf("new deploy manager creation failed: %s", err)
 	}
@@ -365,13 +365,13 @@ func TestFnUpdate(t *testing.T){
 
 	deployInformer := wasmInformerFactory.Apps().V1().Deployments()
 	svcInformer := wasmInformerFactory.Core().V1().Services()
-	
+	Jobnformer := wasmInformerFactory.Batch().V1().Jobs()
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
     //创建wasm组件
-	executor, err := MakeWasm(ctx, logger, fissionClient, kubernetesClient, functionNamespace,"test",funcInformer, deployInformer,svcInformer)
+	executor, err := MakeWasm(ctx, logger, fissionClient, kubernetesClient, functionNamespace,"test",funcInformer, Jobnformer,deployInformer,svcInformer)
 	if err != nil {
 		t.Fatalf("new deploy manager creation failed: %s", err)
 	}

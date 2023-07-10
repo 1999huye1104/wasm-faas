@@ -55,7 +55,7 @@ func App() *cobra.Command {
 	cobra.EnableCommandSorting = false
 
 	rootCmd := &cobra.Command{
-		Use:  "fission",
+		Use:  "faas-cli",
 		Long: usage,
 		//SilenceUsage: true,
 		PersistentPreRunE: wrapper.Wrapper(

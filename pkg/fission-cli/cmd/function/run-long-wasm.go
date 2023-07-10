@@ -220,6 +220,6 @@ func (opts *RunKuasarWasmSubCommand) run(input cli.Input) error {
 		return errors.Wrap(err, "error creating function")
 	}
 
-	fmt.Printf("function '%v' created\n", opts.function.ObjectMeta.Name)
+	fmt.Printf("long function '%v' created\n", opts.function.ObjectMeta.Name)
 	return nil
 }

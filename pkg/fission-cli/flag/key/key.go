@@ -49,6 +49,7 @@ const (
 	ReplicasMaxscale = "maxscale"
 
 	FnName                  = resourceName
+    FnCall                  = "call"
 	FnSpecializationTimeout = "specializationtimeout"
 	FnEnvironmentName       = "env"
 	FnPackageName           = "pkgname"

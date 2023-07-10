@@ -177,6 +177,12 @@ func (hc *HealthChecker) allCategories() []*Category {
 					},
 				},
 				{
+					successMsg: "agent is running fine",
+					check: func() error {
+						return hc.CheckServiceStatus(hc.fissionNamespace, "agent")
+					},
+				},
+				{
 					successMsg: "storagesvc is running fine",
 					check: func() error {
 						return hc.CheckServiceStatus(hc.fissionNamespace, "storagesvc")

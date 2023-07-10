@@ -343,11 +343,12 @@ func StartExecutor(ctx context.Context, logger *zap.Logger, functionNamespace st
 		return err
 	}
 	wasmDeplnformer := wasmInformerFactory.Apps().V1().Deployments()
+	wasmJobnformer := wasmInformerFactory.Batch().V1().Jobs()
 	wasmSvcInformer := wasmInformerFactory.Core().V1().Services()
 	wsm, err := wasm.MakeWasm(
 		ctx, logger,
 		fissionClient, kubernetesClient,
-		functionNamespace, executorInstanceID, funcInformer,
+		functionNamespace, executorInstanceID, funcInformer,wasmJobnformer,
 		wasmDeplnformer, wasmSvcInformer)
 	if err != nil {
 		return errors.Wrap(err, "wasm manager creation failed")
@@ -358,6 +359,9 @@ func StartExecutor(ctx context.Context, logger *zap.Logger, functionNamespace st
 	executorTypes[ndm.GetTypeName(ctx)] = ndm
 	executorTypes[cnm.GetTypeName(ctx)] = cnm
 	executorTypes[wsm.GetTypeName(ctx)] = wsm
+	executorTypes[fv1.ExecutorTypeWasmShortA] = wsm
+	executorTypes[fv1.ExecutorTypeWasmShortS] = wsm
+
 
 	//在yaml文件的环境变量中设置，为false
 	adoptExistingResources, _ := strconv.ParseBool(os.Getenv("ADOPT_EXISTING_RESOURCES"))

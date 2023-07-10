@@ -61,14 +61,14 @@ func (wasm *Wasm) cleanupWasm(ctx context.Context, ns string, name string) error
 		result = multierror.Append(result, err)
 	}
 
-	err = wasm.hpaops.DeleteHpa(ctx, ns, name)
-	if err != nil && !k8s_err.IsNotFound(err) {
-		wasm.logger.Error("error deleting HPA for Wasm function",
-			zap.Error(err),
-			zap.String("function_name", name),
-			zap.String("function_namespace", ns))
-		result = multierror.Append(result, err)
-	}
+	// err = wasm.hpaops.DeleteHpa(ctx, ns, name)
+	// if err != nil && !k8s_err.IsNotFound(err) {
+	// 	wasm.logger.Error("error deleting HPA for Wasm function",
+	// 		zap.Error(err),
+	// 		zap.String("function_name", name),
+	// 		zap.String("function_namespace", ns))
+	// 	result = multierror.Append(result, err)
+	// }
 
 	err = wasm.deleteDeployment(ctx, ns, name)
 	if err != nil && !k8s_err.IsNotFound(err) {
@@ -82,6 +82,19 @@ func (wasm *Wasm) cleanupWasm(ctx context.Context, ns string, name string) error
 	return result.ErrorOrNil()
 }
 
+
+func (wasm *Wasm) cleanupShortWasm(ctx context.Context, ns string, name string) error {
+	result := &multierror.Error{}
+	err := wasm.deleteJob(ctx, ns, name)
+	if err != nil && !k8s_err.IsNotFound(err) {
+		wasm.logger.Error("error deleting service for Wasm function",
+			zap.Error(err),
+			zap.String("function_name", name),
+			zap.String("function_namespace", ns))
+		result = multierror.Append(result, err)
+	}
+	return result.ErrorOrNil()
+}
 // referencedResourcesRVSum returns the sum of resource version of all resources the function references to.
 // We used to update timestamp in the deployment environment field in order to trigger a rolling update when
 // the function referenced resources get updated. However, use timestamp means we are not able to avoid tri-

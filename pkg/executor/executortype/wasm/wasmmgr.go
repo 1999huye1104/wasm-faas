@@ -21,9 +21,11 @@ import (
 	"k8s.io/apimachinery/pkg/util/wait"
 	appsinformers "k8s.io/client-go/informers/apps/v1"
 	coreinformers "k8s.io/client-go/informers/core/v1"
+	batchinformers "k8s.io/client-go/informers/batch/v1"
 	"k8s.io/client-go/kubernetes"
 	appslisters "k8s.io/client-go/listers/apps/v1"
 	corelisters "k8s.io/client-go/listers/core/v1"
+	batchlisters "k8s.io/client-go/listers/batch/v1"
 	k8sCache "k8s.io/client-go/tools/cache"
 
 	fv1 "github.com/fission/fission/pkg/apis/core/v1"
@@ -65,11 +67,13 @@ type (
 
 		defaultIdlePodReapTime time.Duration
 
-		deplLister appslisters.DeploymentLister
+		jobLister batchlisters.JobLister
 		svcLister  corelisters.ServiceLister
+		deplLister appslisters.DeploymentLister
 
-		deplListerSynced k8sCache.InformerSynced
+		jobListerSynced k8sCache.InformerSynced
 		svcListerSynced  k8sCache.InformerSynced
+		deplListerSynced k8sCache.InformerSynced
 
 		hpaops *hpautils.HpaOperations
 	}
@@ -84,6 +88,7 @@ func MakeWasm(
 	namespace string,
 	instanceID string,
 	funcInformer finformerv1.FunctionInformer,
+	jobInformer batchinformers.JobInformer,
 	deplInformer appsinformers.DeploymentInformer,
 	svcInformer coreinformers.ServiceInformer,
 ) (executortype.ExecutorType, error) {
@@ -114,8 +119,11 @@ func MakeWasm(
 
 		hpaops: hpautils.NewHpaOperations(logger, kubernetesClient, instanceID),
 	}
-	wasm.deplLister = deplInformer.Lister()
-	wasm.deplListerSynced = deplInformer.Informer().HasSynced
+	wasm.jobLister = jobInformer.Lister()
+	wasm.jobListerSynced = jobInformer.Informer().HasSynced
+    
+    wasm.deplLister=deplInformer.Lister()
+	wasm.deplListerSynced=deplInformer.Informer().HasSynced
 
 	wasm.svcLister = svcInformer.Lister()
 	wasm.svcListerSynced = svcInformer.Informer().HasSynced
@@ -126,7 +134,7 @@ func MakeWasm(
 
 // Run start the function along with an object reaper.
 func (wasm *Wasm) Run(ctx context.Context) {
-	if ok := k8sCache.WaitForCacheSync(ctx.Done(), wasm.deplListerSynced, wasm.svcListerSynced); !ok {
+	if ok := k8sCache.WaitForCacheSync(ctx.Done(), wasm.jobListerSynced,wasm.deplListerSynced,wasm.svcListerSynced); !ok {
 		wasm.logger.Fatal("failed to wait for caches to sync")
 	}
 	go wasm.idleObjectReaper(ctx)
@@ -150,7 +158,12 @@ func (wasm *Wasm) UnTapService(ctx context.Context, key string, svcHost string) 
 
 // GetFuncSvc returns a function service; error otherwise.
 func (wasm *Wasm) GetFuncSvc(ctx context.Context, fn *fv1.Function) (*fscache.FuncSvc, error) {
-	return wasm.createFunction(ctx, fn)
+	if fn.Spec.InvokeStrategy.ExecutionStrategy.ExecutorType==fv1.ExecutorTypeWasm{
+		return wasm.createFunction(ctx, fn)
+	}else{
+        return wasm.createShortFunction(ctx, fn)
+	}
+	
 }
 
 // GetFuncSvcFromCache returns a function service from cache; error otherwise.
@@ -214,6 +227,14 @@ func (wasm *Wasm) IsValid(ctx context.Context, fsvc *fscache.FuncSvc) bool {
 			if currentDeploy.Status.AvailableReplicas < 1 {
 				return false
 			}
+		}else if strings.ToLower(obj.Kind) == "job"{
+			_, err := wasm.jobLister.Jobs(obj.Namespace).Get(obj.Name)
+			if err != nil {
+				if !k8sErrs.IsNotFound(err) {
+					logger.Error("error validating function job", zap.String("function", fsvc.Function.Name), zap.Error(err))
+				}
+				return false
+			}
 		}
 	}
 	return true
@@ -263,7 +284,7 @@ func (wasm *Wasm) AdoptExistingResources(ctx context.Context) {
 
 	for i := range fnList.Items {
 		fn := &fnList.Items[i]
-		if fn.Spec.InvokeStrategy.ExecutionStrategy.ExecutorType == fv1.ExecutorTypeWasm {
+		if fn.Spec.InvokeStrategy.ExecutionStrategy.ExecutorType == fv1.ExecutorTypeWasm ||fn.Spec.InvokeStrategy.ExecutionStrategy.ExecutorType == fv1.ExecutorTypeWasmShortA||fn.Spec.InvokeStrategy.ExecutionStrategy.ExecutorType == fv1.ExecutorTypeWasmShortS{
 			wg.Add(1)
 			go func() {
 				defer wg.Done()
@@ -311,6 +332,36 @@ func (wasm *Wasm) CleanupOldExecutorObjects(ctx context.Context) {
 	}
 }
 
+//部署短函数
+func (wasm *Wasm) createShortFunction(ctx context.Context, fn *fv1.Function) (*fscache.FuncSvc, error) {
+	if fn.Spec.InvokeStrategy.ExecutionStrategy.ExecutorType != fv1.ExecutorTypeWasmShortA && fn.Spec.InvokeStrategy.ExecutionStrategy.ExecutorType != fv1.ExecutorTypeWasmShortS{
+		return nil, nil
+	}
+	fsvcObj, err := wasm.throttler.RunOnce(string(fn.ObjectMeta.UID), func(ableToCreate bool) (interface{}, error) {
+		if ableToCreate {
+			return wasm.fnShortCreate(ctx, fn)
+		}
+		return wasm.fsCache.GetByFunctionUID(fn.ObjectMeta.UID)
+	})
+	if err != nil {
+		e := "error creating k8s resources for function"
+		wasm.logger.Error(e,
+			zap.Error(err),
+			zap.String("function_name", fn.ObjectMeta.Name),
+			zap.String("function_namespace", fn.ObjectMeta.Namespace))
+		return nil, errors.Wrapf(err, "%s %s_%s", e, fn.ObjectMeta.Name, fn.ObjectMeta.Namespace)
+	}
+
+	fsvc, ok := fsvcObj.(*fscache.FuncSvc)
+	if !ok {
+		wasm.logger.Panic("receive unknown object while creating function - expected pointer of function service object")
+	}
+
+	return fsvc, err
+
+}
+
+
 func (wasm *Wasm) createFunction(ctx context.Context, fn *fv1.Function) (*fscache.FuncSvc, error) {
 	if fn.Spec.InvokeStrategy.ExecutionStrategy.ExecutorType != fv1.ExecutorTypeWasm {
 		return nil, nil
@@ -349,6 +400,77 @@ func (wasm *Wasm) deleteFunction(ctx context.Context, fn *fv1.Function) error {
 	}
 	return err
 }
+
+func (wasm *Wasm) deleteShortFunction(ctx context.Context, fn *fv1.Function) error {
+	if fn.Spec.InvokeStrategy.ExecutionStrategy.ExecutorType != fv1.ExecutorTypeWasmShortA&& fn.Spec.InvokeStrategy.ExecutionStrategy.ExecutorType != fv1.ExecutorTypeWasmShortS{
+		return nil
+	}
+	err := wasm.fnShortDelete(ctx, fn)
+	if err != nil {
+		err = errors.Wrapf(err, "error deleting kubernetes objects of function %v", fn.ObjectMeta)
+	}
+	return err
+}
+
+
+func (wasm *Wasm) fnShortCreate(ctx context.Context, fn *fv1.Function) (*fscache.FuncSvc, error) {
+	cleanupFunc := func(ns string, name string) {
+		err := wasm.cleanupShortWasm(ctx, ns, name)
+		if err != nil {
+			wasm.logger.Error("received error while cleaning function resources",
+				zap.String("namespace", ns), zap.String("name", name))
+		}
+	}
+	objName := wasm.getObjName(fn)
+	deployLabels := wasm.getDeployLabels(fn.ObjectMeta)
+	deployAnnotations := wasm.getDeployAnnotations(fn.ObjectMeta)
+
+	ns := wasm.namespace
+	if fn.ObjectMeta.Namespace != metav1.NamespaceDefault {
+		ns = fn.ObjectMeta.Namespace
+	}
+    //通过job来部署
+	job, err := wasm.createOrGetJob(ctx, fn, deployLabels, deployAnnotations, objName, ns)
+	if err != nil {
+		wasm.logger.Error("error creating job", zap.Error(err), zap.String("job", objName))
+		go cleanupFunc(ns, objName)
+		return nil, errors.Wrapf(err, "error creating job %v", objName)
+	}
+	svcAddress := fmt.Sprintf("%v.%v", job.Name, job.Namespace)
+
+
+	kubeObjRefs := []apiv1.ObjectReference{
+		
+		{
+			Kind:            "job",
+			Name:            job.ObjectMeta.Name,
+			APIVersion:      job.TypeMeta.APIVersion,
+			Namespace:       job.ObjectMeta.Namespace,
+			ResourceVersion: job.ObjectMeta.ResourceVersion,
+			UID:             job.ObjectMeta.UID,
+		},
+	}
+
+	fsvc := &fscache.FuncSvc{
+		Name:              objName,
+		Function:          &fn.ObjectMeta,
+		Address:           svcAddress,
+		KubernetesObjects: kubeObjRefs,
+		Executor:          fv1.ExecutorTypeWasm,
+	}
+
+	_, err = wasm.fsCache.Add(*fsvc)
+	if err != nil {
+		wasm.logger.Error("error adding function to cache", zap.Error(err), zap.Any("function", fsvc.Function))
+		metrics.FuncError.WithLabelValues(fn.ObjectMeta.Name, fn.ObjectMeta.Namespace).Inc()
+		return fsvc, err
+	}
+
+	metrics.ColdStarts.WithLabelValues(fn.ObjectMeta.Name, fn.ObjectMeta.Namespace).Inc()
+
+	return fsvc, nil
+}
+
 
 func (wasm *Wasm) fnCreate(ctx context.Context, fn *fv1.Function) (*fscache.FuncSvc, error) {
 	cleanupFunc := func(ns string, name string) {
@@ -639,6 +761,41 @@ func (wasm *Wasm) fnDelete(ctx context.Context, fn *fv1.Function) error {
 	}
 
 	err = wasm.cleanupWasm(ctx, ns, objName)
+	multierr = multierror.Append(multierr, err)
+
+	return multierr.ErrorOrNil()
+}
+
+func (wasm *Wasm) fnShortDelete(ctx context.Context, fn *fv1.Function) error {
+	multierr := &multierror.Error{}
+
+	// GetByFunction uses resource version as part of cache key, however,
+	// the resource version in function metadata will be changed when a function
+	// is deleted and cause Wasm backend fails to delete the entry.
+	// Use GetByFunctionUID instead of GetByFunction here to find correct
+	// fsvc entry.
+	fsvc, err := wasm.fsCache.GetByFunctionUID(fn.ObjectMeta.UID)
+	if err != nil {
+		err = errors.Wrap(err, fmt.Sprintf("fsvc not found in cache: %v", fn.ObjectMeta))
+		return err
+	}
+
+	objName := fsvc.Name
+
+	_, err = wasm.fsCache.DeleteOld(fsvc, time.Second*0)
+	if err != nil {
+		multierr = multierror.Append(multierr,
+			errors.Wrapf(err, "error deleting the function from cache"))
+	}
+
+	// to support backward compatibility, if the function was created in default ns, we fall back to creating the
+	// deployment of the function in fission-function ns, so cleaning up resources there
+	ns := wasm.namespace
+	if fn.ObjectMeta.Namespace != metav1.NamespaceDefault {
+		ns = fn.ObjectMeta.Namespace
+	}
+
+	err = wasm.cleanupShortWasm(ctx, ns, objName)
 	multierr = multierror.Append(multierr, err)
 
 	return multierr.ErrorOrNil()

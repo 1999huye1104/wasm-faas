@@ -154,6 +154,23 @@ func Commands() *cobra.Command {
 		},
 	})
 
+	testShortCmd := &cobra.Command{
+		Use:     "testShort",
+		Aliases: []string{},
+		Short:   "Test a short wasm function",
+		RunE:    wrapper.Wrapper(TestShort),
+	}
+	wrapper.SetFlags(testCmd, flag.FlagSet{
+		Required: []flag.Flag{flag.FnName},
+		Optional: []flag.Flag{flag.HtMethod, flag.FnTestHeader, flag.FnTestBody,
+			flag.FnTestQuery, flag.FnTestTimeout, flag.NamespaceFunction,
+			// for getting log from log database if
+			// we failed to get logs from function pod.
+			flag.FnLogDBType,
+			flag.FnSubPath,
+		},
+	})
+
 	runContainerCmd := &cobra.Command{
 		Use:     "run-container",
 		Aliases: []string{"runc"},
@@ -180,13 +197,37 @@ func Commands() *cobra.Command {
 	})
 
 	runKuasarWasmCmd := &cobra.Command{
-		Use:     "run-kuasar-wasm",
-		Aliases: []string{"runkw"},
-		Short:   "Alpha: Run a container image as a wasm function with kuasar",
+		Use:     "run-long-wasm",
+		Aliases: []string{"runlw"},
+		Short:   "Alpha: Run a container image as a short wasm function with kuasar",
 		RunE:    wrapper.Wrapper(RunKuasarWasm),
 	}
 	wrapper.SetFlags(runKuasarWasmCmd, flag.FlagSet{
 		Required: []flag.Flag{flag.FnName, flag.FnImageName},
+		Optional: []flag.Flag{
+			flag.FnPort, flag.FnCommand, flag.FnArgs,
+			flag.FnCfgMap, flag.FnSecret,
+			flag.FnExecutionTimeout,
+			flag.FnIdleTimeout,
+			flag.FnTerminationGracePeriod,
+			flag.Labels, flag.Annotation,
+
+			// flag for newdeploy to use.
+			flag.RunTimeMinCPU, flag.RunTimeMaxCPU, flag.RunTimeMinMemory,
+			flag.RunTimeMaxMemory, flag.ReplicasMin,
+			flag.ReplicasMax, flag.RunTimeTargetCPU,
+
+			flag.NamespaceFunction, flag.SpecSave, flag.SpecDry,
+		},
+	})
+	runShortWasmCmd := &cobra.Command{
+		Use:     "run-short-wasm",
+		Aliases: []string{"runsw"},
+		Short:   "Alpha: Run a container image as a short wasm function with kuasar",
+		RunE:    wrapper.Wrapper(RunShortWasm),
+	}
+	wrapper.SetFlags(runKuasarWasmCmd, flag.FlagSet{
+		Required: []flag.Flag{flag.FnName, flag.FnImageName,flag.FnCallMethod},
 		Optional: []flag.Flag{
 			flag.FnPort, flag.FnCommand, flag.FnArgs,
 			flag.FnCfgMap, flag.FnSecret,
@@ -271,8 +312,8 @@ func Commands() *cobra.Command {
 		Aliases: []string{"fn"},
 		Short:   "Create, update and manage functions",
 	}
-	command.AddCommand(createCmd, getCmd, getmetaCmd, updateCmd, deleteCmd, listCmd, logsCmd, testCmd,
-		runContainerCmd,runKuasarWasmCmd,updateContainerCmd,runWasmCmd, listPodsCmd)
+	command.AddCommand(createCmd, getCmd, getmetaCmd, updateCmd, deleteCmd, listCmd, logsCmd, testCmd,testShortCmd,
+		runContainerCmd,runKuasarWasmCmd,runShortWasmCmd ,updateContainerCmd,runWasmCmd, listPodsCmd)
 
 	return command
 }

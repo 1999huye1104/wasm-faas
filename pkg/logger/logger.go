@@ -88,7 +88,7 @@ func createLogSymlinks(zapLogger *zap.Logger, pod *corev1.Pod) error {
 		containerLogPath := getLogPath(originalContainerLogPath, pod.Name, pod.Namespace, container.Name, containerUID)
 		symlinkLogPath := getLogPath(fissionSymlinkPath, pod.Name, pod.Namespace, container.Name, containerUID)
 
-		// check whether a symlink exists, if yes then ignore it
+		// check whether a symlink exists, if yes then ignore it 相当于是创建对前面的contianerLog符号连接，访问后面symlinklog等于访问前面的路径
 		if _, err := os.Stat(symlinkLogPath); os.IsNotExist(err) {
 			err := os.Symlink(containerLogPath, symlinkLogPath)
 			if err != nil {
