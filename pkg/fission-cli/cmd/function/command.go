@@ -160,7 +160,7 @@ func Commands() *cobra.Command {
 		Short:   "Test a short wasm function",
 		RunE:    wrapper.Wrapper(TestShort),
 	}
-	wrapper.SetFlags(testCmd, flag.FlagSet{
+	wrapper.SetFlags(testShortCmd, flag.FlagSet{
 		Required: []flag.Flag{flag.FnName},
 		Optional: []flag.Flag{flag.HtMethod, flag.FnTestHeader, flag.FnTestBody,
 			flag.FnTestQuery, flag.FnTestTimeout, flag.NamespaceFunction,
@@ -226,7 +226,7 @@ func Commands() *cobra.Command {
 		Short:   "Alpha: Run a container image as a short wasm function with kuasar",
 		RunE:    wrapper.Wrapper(RunShortWasm),
 	}
-	wrapper.SetFlags(runKuasarWasmCmd, flag.FlagSet{
+	wrapper.SetFlags(runShortWasmCmd, flag.FlagSet{
 		Required: []flag.Flag{flag.FnName, flag.FnImageName,flag.FnCallMethod},
 		Optional: []flag.Flag{
 			flag.FnPort, flag.FnCommand, flag.FnArgs,
