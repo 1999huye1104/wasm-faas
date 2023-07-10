@@ -176,6 +176,7 @@ Use it to start one or more of the fission servers:
 Usage:
   fission-bundle --controllerPort=<port>
   fission-bundle --routerPort=<port> [--executorUrl=<url>]
+  fission-bundle --agentPort=<port> [--executorUrl=<url>]
   fission-bundle --executorPort=<port> [--namespace=<namespace>] [--fission-namespace=<namespace>]
   fission-bundle --kubewatcher [--routerUrl=<url>]
   fission-bundle --storageServicePort=<port> --storageType=<storateType>
@@ -188,10 +189,12 @@ Usage:
 Options:
   --controllerPort=<port>         Port that the controller should listen on.
   --routerPort=<port>             Port that the router should listen on.
+  --agentPort=<port>              Port that the agent should listen on.
   --executorPort=<port>           Port that the executor should listen on.
   --storageServicePort=<port>     Port that the storage service should listen on.
   --executorUrl=<url>             Executor URL. Not required if --executorPort is specified.
   --routerUrl=<url>               Router URL.
+  --agentUrl=<url>                Agent URL.
   --etcdUrl=<etcdUrl>             Etcd URL.
   --storageSvcUrl=<url>           StorageService URL.
   --filePath=<filePath>           Directory to store functions in.
@@ -230,6 +233,7 @@ Options:
 
 	executorUrl := getStringArgWithDefault(arguments["--executorUrl"], "http://executor.fission")
 	routerUrl := getStringArgWithDefault(arguments["--routerUrl"], "http://router.fission")
+	// agentUrl := getStringArgWithDefault(arguments["--agentUrl"], "http://agent.fission")
 	storageSvcUrl := getStringArgWithDefault(arguments["--storageSvcUrl"], "http://storagesvc.fission")
 
 	if arguments["--controllerPort"] != nil {
