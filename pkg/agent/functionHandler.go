@@ -797,17 +797,17 @@ func (fh functionHandler) collectFunctionMetric(start time.Time, req *http.Reque
 		}
 	}
 
-	functionCalls.WithLabelValues(fh.function.ObjectMeta.Namespace,
+	wasmfunctionCalls.WithLabelValues(fh.function.ObjectMeta.Namespace,
 		fh.function.ObjectMeta.Name, path, req.Method,
 		fmt.Sprint(code)).Inc()
 
 	if code >= 400 {
-		functionCallErrors.WithLabelValues(fh.function.ObjectMeta.Namespace,
+		wasmfunctionCallErrors.WithLabelValues(fh.function.ObjectMeta.Namespace,
 			fh.function.ObjectMeta.Name, path, req.Method,
 			fmt.Sprint(code)).Inc()
 	}
 
-	functionCallOverhead.WithLabelValues(fh.function.ObjectMeta.Namespace,
+	wasmfunctionCallOverhead.WithLabelValues(fh.function.ObjectMeta.Namespace,
 		fh.function.ObjectMeta.Name, path, req.Method,
 		fmt.Sprint(code)).
 		Observe(float64(duration.Nanoseconds()) / 1e9)
