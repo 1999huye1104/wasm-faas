@@ -145,6 +145,7 @@ func (fh functionHandler) handler(responseWriter http.ResponseWriter, request *h
 		go fh.collectFunctionMetric(start, request, code)
 		return 
 	 }else if  !errors.Is(err, redis.Nil){
+		fh.logger.Error(err.Error())
 		fh.respondWithError(responseWriter,err.Error())
 		start := time.Now()
 		go fh.collectFunctionMetric(start, request, code)
@@ -153,6 +154,7 @@ func (fh functionHandler) handler(responseWriter http.ResponseWriter, request *h
 
 	 _, err = fh.getServiceEntryFromExecutor(ctx)
 	if err!=nil{
+		fh.logger.Error(err.Error())
 		fh.respondWithError(responseWriter,err.Error())
 		start := time.Now()
 		code=404
@@ -165,7 +167,7 @@ func (fh functionHandler) handler(responseWriter http.ResponseWriter, request *h
 		
 		select {
 		case msg := <-fh.functionOutput:
-			fmt.Println("Received from channel:", msg)
+			fmt.Println("********Received from channel:", msg)
 			//将数据返回给用户
 			fh.respondWithSuccess(responseWriter,[]byte(msg))
 			start := time.Now()
