@@ -55,7 +55,7 @@ func Start(ctx context.Context, logger *zap.Logger, port int, executorURL string
 	
 	// 创建 Redis 客户端
     redisClient := redis.NewClient(&redis.Options{
-		Addr:     "redis-service.fission", // Redis 服务器地址和端口
+		Addr:     "redis-service.fission:6379", // Redis 服务器地址和端口
 		Password: "123456",              // Redis 服务器密码（如果有的话）
 		DB:       0,                     // Redis 数据库索引
 	})
