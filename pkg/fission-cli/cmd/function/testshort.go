@@ -25,7 +25,7 @@ type TestShortSubCommand struct {
 }
 
 func TestShort(input cli.Input) error {
-	return (&TestSubCommand{}).do(input)
+	return (&TestShortSubCommand{}).do(input)
 }
 
 func (opts *TestShortSubCommand) do(input cli.Input) error {
