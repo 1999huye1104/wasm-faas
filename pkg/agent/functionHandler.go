@@ -137,7 +137,7 @@ func (fh functionHandler) handler(responseWriter http.ResponseWriter, request *h
      //首先去redis数据库中查找是否有函数结果
 	 fn:=fh.function
 	 val, err := fh.redisClient.Get(string(fn.UID)).Result()
-	 //说明数据库里面有
+	 //数据库中存在
 	 if err == nil {
 		resp:=[]byte(val)
 		fh.respondWithSuccess(responseWriter,resp)
@@ -160,7 +160,7 @@ func (fh functionHandler) handler(responseWriter http.ResponseWriter, request *h
 		return
 	}
 
-    //处理同步和异步
+    //处理同步
 	 if fn.Spec.InvokeStrategy.ExecutionStrategy.ExecutorType==fv1.ExecutorTypeWasmShortS{
 		
 		select {
@@ -220,10 +220,6 @@ func (fh functionHandler) functionOutputHandler(w http.ResponseWriter, r *http.R
 	body, err := ioutil.ReadAll(r.Body)
 	// 打印请求体内容
 	ans := string(body)
-	// result := strings.Split(ans, ",")
-	// if len(result) < 2 {
-	// 	http.Error(w, "result should be composed by two string with ,", http.StatusInternalServerError)
-	// }
 	uid := string(fh.function.UID)
 	res := ans
 	if fh.function.Spec.InvokeStrategy.ExecutionStrategy.ExecutorType==fv1.ExecutorTypeWasmShortS{
