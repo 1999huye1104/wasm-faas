@@ -59,7 +59,12 @@ func Start(ctx context.Context, logger *zap.Logger, port int, executorURL string
 		Password: "123456",              // Redis 服务器密码（如果有的话）
 		DB:       0,                     // Redis 数据库索引
 	})
-
+	//连接测试
+    _, err = redisClient.Ping().Result()
+	if err != nil {
+		logger.Fatal("error connecting to redis", zap.Error(err))
+	}
+	logger.Info("redis连接成功！！！")
 	err = crd.WaitForCRDs(fissionClient)
 	if err != nil {
 		logger.Fatal("error waiting for CRDs", zap.Error(err))

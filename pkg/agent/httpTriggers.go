@@ -149,6 +149,7 @@ func (ts *HTTPTriggerSet) getRouter(fnTimeoutMap map[types.UID]int) *mux.Router 
         
 		fh := &functionHandler{
 			logger:                   ts.logger.Named(trigger.ObjectMeta.Name),
+			redisClient:              ts.redisClient,
 			executor:                 ts.executor,
 			httpTrigger:              &trigger,
 			functionMap:              rr.functionMap,
@@ -248,6 +249,7 @@ func (ts *HTTPTriggerSet) getRouter(fnTimeoutMap map[types.UID]int) *mux.Router 
 		fn := ts.functions[i]
 		fh := &functionHandler{
 			logger:                 ts.logger.Named(fn.ObjectMeta.Name),
+			redisClient:            ts.redisClient,
 			function:               &fn,
 			executor:               ts.executor,
 			tsRoundTripperParams:   ts.tsRoundTripperParams,
