@@ -69,7 +69,7 @@ func MakeClient(logger *zap.Logger, executorURL string) *Client {
 // GetServiceForFunction returns the service name for a given function.
 func (c *Client) GetServiceForFunction(ctx context.Context, fn *fv1.Function) (string, error) {
 	executorURL := c.executorURL + "/v2/getServiceForFunction"
-
+	
 	body, err := json.Marshal(fn)
 	if err != nil {
 		return "", errors.Wrap(err, "could not marshal request body for getting service for function")

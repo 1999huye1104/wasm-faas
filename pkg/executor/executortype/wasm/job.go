@@ -59,9 +59,6 @@ func (wasm *Wasm) createOrGetJob(ctx context.Context, fn *fv1.Function, deployLa
 			Annotations: deployAnnotations,
 		},
 		Spec: batchv1.JobSpec{
-			Selector: &metav1.LabelSelector{
-				MatchLabels: deployLabels,
-			},
 			// 在这里设置 Job 的规范和参数，例如设置容器模板等
 			Template: pod,
 		},
