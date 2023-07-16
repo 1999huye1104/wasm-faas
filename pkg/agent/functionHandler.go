@@ -173,9 +173,9 @@ func (fh functionHandler) handler(responseWriter http.ResponseWriter, request *h
 			start := time.Now()
 		    go fh.collectFunctionMetric(start, request, code)
 			return
-		case <-time.After(5 * time.Second):
-			fmt.Println("5 seconds Timeout occurred")
-			msg:="5 seconds Timeout occurred"
+		case <-time.After(10 * time.Second):
+			fmt.Println("10 seconds Timeout occurred")
+			msg:="10 seconds Timeout occurred"
 			fh.respondWithError(responseWriter,msg)
 			start := time.Now()
 			code=404
@@ -219,6 +219,7 @@ func (fh functionHandler) depoDateRedis(uid string, result string) error{
 
 //处理funtionOutput回调函数
 func (fh functionHandler) functionOutputHandler(w http.ResponseWriter, r *http.Request) {
+	fh.logger.Info(r.URL.String())
 	body, err := ioutil.ReadAll(r.Body)
 	// 打印请求体内容
 	ans := string(body)
@@ -228,6 +229,8 @@ func (fh functionHandler) functionOutputHandler(w http.ResponseWriter, r *http.R
          fh.functionOutput <-res
 	}
 	//将结果存入redis数据库中
+	msg:="key is"+ans+" value is "+uid
+	fh.logger.Info(msg)
 	err = fh.depoDateRedis(uid, res)
 	if err != nil {
 		fh.logger.Error(err.Error())

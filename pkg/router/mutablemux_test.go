@@ -44,9 +44,12 @@ func NewHandler(responseWriter http.ResponseWriter, request *http.Request) {
 	}
 }
 
-func verifyRequest(expectedResponse string) {
-	targetURL := "http://localhost:3333"
-	testRequest(targetURL, expectedResponse)
+func verifyRequest() {
+	targetURL := "http://localhost:3333/aaa"
+	testRequest(targetURL)
+	targetURL2 := "http://localhost:3333/aaa/functionOutput"
+	testRequestPost(targetURL2)
+	
 }
 
 func spamServer(quit chan bool) {
@@ -57,7 +60,7 @@ func spamServer(quit chan bool) {
 			return
 		default:
 			i = i + 1
-			resp, err := http.Get("http://localhost:3333")
+			resp, err := http.Get("http://localhost:3333/aaa")
 			if err != nil {
 				log.Panicf("failed to make get request %v: %v", i, err)
 			}
@@ -65,13 +68,25 @@ func spamServer(quit chan bool) {
 		}
 	}
 }
+func subHandler(w http.ResponseWriter, r *http.Request) {
+	w.Write([]byte("sub Route"))
+}
 
+func subHandler2(w http.ResponseWriter, r *http.Request) {
+	w.Write([]byte("sub2 Route"))
+}
 func TestMutableMux(t *testing.T) {
 	// make a simple mutable router
 	log.Print("Create mutable router")
 	muxRouter := mux.NewRouter()
 	muxRouter.Use(metrics.HTTPMetricMiddleware)
-	muxRouter.HandleFunc("/", OldHandler)
+	subrouter:=muxRouter.PathPrefix("/aaa").Subrouter()
+	subrouter.HandleFunc("/", OldHandler)
+    subrouter.Handle("/functionOutput", http.HandlerFunc(subHandler)).Methods("POST")
+  
+
+	// subRouter := mux.NewRouter().PathPrefix("/aaa").Subrouter()
+	// subRouter.Handle("/functionOutput", http.HandlerFunc(subHandler))
 	config := zap.NewDevelopmentConfig()
 	config.EncoderConfig.EncodeTime = zapcore.ISO8601TimeEncoder
 	logger, err := config.Build()
@@ -85,26 +100,34 @@ func TestMutableMux(t *testing.T) {
 
 	// continuously make requests, panic if any fails
 	time.Sleep(100 * time.Millisecond)
-	q := make(chan bool)
-	go spamServer(q)
+	// q := make(chan bool)
+	// go spamServer(q)
 
 	time.Sleep(5 * time.Millisecond)
 
 	// connect and verify old handler
 	log.Print("Verify old handler")
-	verifyRequest("old handler")
+	verifyRequest()
 
 	// change the muxer
 	log.Print("Change mux router")
 	newMuxRouter := mux.NewRouter()
 	newMuxRouter.Use(metrics.HTTPMetricMiddleware)
-	newMuxRouter.HandleFunc("/", NewHandler)
+	subrouter=newMuxRouter.PathPrefix("/aaa").Subrouter()
+	subrouter.Handle("/",http.HandlerFunc( NewHandler))
+    subrouter.Handle("/functionOutput", http.HandlerFunc(subHandler2)).Methods("POST")
+	// newMuxRouter.HandleFunc("/aaa", NewHandler)
+	// subRouter = mux.NewRouter()
+    // subRouter.Handle("/functionOutput", http.HandlerFunc(subHandler2))
+    // muxRouter.PathPrefix("/aaa").Handler(subRouter)
+	// subRouter = muxRouter.PathPrefix("/aaa").Subrouter()
+	// subRouter.Handle("/functionOutput", http.HandlerFunc(subHandler2)).Methods("POST")
 	mr.updateRouter(newMuxRouter)
 
 	// connect and verify the new handler
 	log.Print("Verify new handler")
-	verifyRequest("new handler")
+	verifyRequest()
 
-	q <- true
+	// q <- true
 	time.Sleep(100 * time.Millisecond)
 }

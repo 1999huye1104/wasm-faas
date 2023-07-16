@@ -261,12 +261,15 @@ func (ts *HTTPTriggerSet) getRouter(fnTimeoutMap map[types.UID]int) *mux.Router 
 
 		var handler http.Handler
 		internalRoute := utils.UrlForFunction(fn.ObjectMeta.Name, fn.ObjectMeta.Namespace)
-		internalPrefixRoute := internalRoute
 		handler = otel.GetHandlerWithOTEL(http.HandlerFunc(fh.handler), internalRoute)
-		muxRouter.Handle(internalRoute, handler)
+		// muxRouter.Handle(internalRoute, handler)
 		//为每个函数设置子路由
-		subRouter := muxRouter.PathPrefix(internalPrefixRoute).Subrouter()
-		subRouter.HandleFunc("/functionOutput", fh.functionOutputHandler).Methods("POST")
+		// subRouter := muxRouter.PathPrefix(internalRoute).Subrouter()
+		// subRouter.Handle("/functionOutput", http.HandlerFunc(fh.functionOutputHandler)).Methods("POST")
+
+		subRouter:=muxRouter.PathPrefix(internalRoute).Subrouter()
+	    subRouter.Handle("/", handler)
+		subRouter.Handle("/functionOutput", http.HandlerFunc(fh.functionOutputHandler)).Methods("POST")
 	}
 
 	if featureConfig.AuthConfig.IsEnabled {
