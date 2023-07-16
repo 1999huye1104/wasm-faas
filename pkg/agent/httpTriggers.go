@@ -259,6 +259,7 @@ func (ts *HTTPTriggerSet) getRouter(fnTimeoutMap map[types.UID]int) *mux.Router 
 			svcAddrUpdateThrottler: ts.svcAddrUpdateThrottler,
 			functionTimeoutMap:     fnTimeoutMap,
 			unTapServiceTimeout:    ts.unTapServiceTimeout,
+			functionOutput:           make(chan string),
 		}
 
 		var handler http.Handler
