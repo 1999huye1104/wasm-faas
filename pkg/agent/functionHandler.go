@@ -221,17 +221,21 @@ func (fh functionHandler) depoDateRedis(uid string, result string) error{
 func (fh functionHandler) functionOutputHandler(w http.ResponseWriter, r *http.Request) {
 	fh.logger.Info(r.URL.String())
 	body, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		http.Error(w, "Error reading request body", http.StatusInternalServerError)
+		return
+	}
 	// 打印请求体内容
 	ans := string(body)
 	uid := string(fh.function.UID)
-	res := ans
-	if fh.function.Spec.InvokeStrategy.ExecutionStrategy.ExecutorType==fv1.ExecutorTypeWasmShortS{
-         fh.functionOutput <-res
-	}
-	//将结果存入redis数据库中
 	msg:="key is"+ans+" value is "+uid
 	fh.logger.Info(msg)
-	err = fh.depoDateRedis(uid, res)
+	if fh.function.Spec.InvokeStrategy.ExecutionStrategy.ExecutorType==fv1.ExecutorTypeWasmShortS{
+         fh.functionOutput <-ans
+	}
+	//将结果存入redis数据库中
+	fh.logger.Info("将数据存入数据库中")
+	err = fh.depoDateRedis(uid, ans)
 	if err != nil {
 		fh.logger.Error(err.Error())
 		http.Error(w, "fail to deposit data to redis", http.StatusInternalServerError)

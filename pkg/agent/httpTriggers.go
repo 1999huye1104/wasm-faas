@@ -147,6 +147,7 @@ func (ts *HTTPTriggerSet) getRouter(fnTimeoutMap map[types.UID]int) *mux.Router 
 			ts.logger.Panic("resolve result type not implemented", zap.Any("type", rr.resolveResultType))
 		}
         
+
 		fh := &functionHandler{
 			logger:                   ts.logger.Named(trigger.ObjectMeta.Name),
 			redisClient:              ts.redisClient,
@@ -159,6 +160,7 @@ func (ts *HTTPTriggerSet) getRouter(fnTimeoutMap map[types.UID]int) *mux.Router 
 			svcAddrUpdateThrottler:   ts.svcAddrUpdateThrottler,
 			functionTimeoutMap:       fnTimeoutMap,
 			unTapServiceTimeout:      ts.unTapServiceTimeout,
+			functionOutput:           make(chan string),
 		}
 
 		// The functionHandler for HTTP trigger with fn reference type "FunctionReferenceTypeFunctionName",
