@@ -233,7 +233,7 @@ Options:
 
 	executorUrl := getStringArgWithDefault(arguments["--executorUrl"], "http://executor.fission")
 	routerUrl := getStringArgWithDefault(arguments["--routerUrl"], "http://router.fission")
-	// agentUrl := getStringArgWithDefault(arguments["--agentUrl"], "http://agent.fission")
+	agentUrl := getStringArgWithDefault(arguments["--agentUrl"], "http://agent.fission")
 	storageSvcUrl := getStringArgWithDefault(arguments["--storageSvcUrl"], "http://storagesvc.fission")
 
 	if arguments["--controllerPort"] != nil {
@@ -275,7 +275,7 @@ Options:
 	}
 
 	if arguments["--timer"] == true {
-		err = runTimer(ctx, logger, routerUrl)
+		err = runTimer(ctx, logger, agentUrl)
 		if err != nil {
 			logger.Error("timer exited", zap.Error(err))
 			return

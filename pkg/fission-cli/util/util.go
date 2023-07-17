@@ -389,9 +389,9 @@ func GetEnvVarFromStringSlice(params []string) []v1.EnvVar {
 }
 
 func UrlForFunction(name, namespace string) string {
-	prefix := "/fission-function"
+	prefix := "/faas-function"
 	if namespace != metav1.NamespaceDefault {
-		prefix = fmt.Sprintf("/fission-function/%s", namespace)
+		prefix = fmt.Sprintf("/faas-function/%s", namespace)
 	}
 	return fmt.Sprintf("%v/%v", prefix, name)
 }
