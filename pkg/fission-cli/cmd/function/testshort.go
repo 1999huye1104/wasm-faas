@@ -117,7 +117,7 @@ func (opts *TestShortSubCommand) do(input cli.Input) error {
 	}
 
 	if resp.StatusCode < 400 {
-		os.Stdout.Write(body)
+		// os.Stdout.Write(body)
 		result:=string(body)
 		console.Info(result)
 		return nil

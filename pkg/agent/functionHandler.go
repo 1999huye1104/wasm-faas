@@ -139,8 +139,9 @@ func (fh functionHandler) handler(responseWriter http.ResponseWriter, request *h
 	 val, err := fh.redisClient.Get(string(fn.UID)).Result()
 	 //数据库中存在
 	 if err == nil {
-		resp:=[]byte(val)
-		fh.respondWithSuccess(responseWriter,resp)
+		// resp:=[]byte(val)
+		body:="The Result is"+val+"!!!"
+		fh.respondWithSuccess(responseWriter,[]byte(body))
 		start := time.Now()
 		go fh.collectFunctionMetric(start, request, code)
 		return 
