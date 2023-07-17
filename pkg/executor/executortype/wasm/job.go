@@ -96,5 +96,12 @@ func (wasm *Wasm) createOrGetJob(ctx context.Context, fn *fv1.Function, deployLa
 
 
 func (wasm *Wasm) deleteJob(ctx context.Context, ns string, name string) error {
-    return wasm.kubernetesClient.BatchV1().Jobs(ns).Delete(ctx, name, metav1.DeleteOptions{})
+
+	deletePropagation := metav1.DeletePropagationBackground
+	// return cn.kubernetesClient.AppsV1().Deployments(ns).Delete(ctx, name, metav1.DeleteOptions{
+	// 	PropagationPolicy: &deletePropagation,
+	// })
+    return wasm.kubernetesClient.BatchV1().Jobs(ns).Delete(ctx, name, metav1.DeleteOptions{
+		PropagationPolicy: &deletePropagation,
+	})
 }

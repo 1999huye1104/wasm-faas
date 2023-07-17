@@ -169,7 +169,8 @@ func (fh functionHandler) handler(responseWriter http.ResponseWriter, request *h
 		case msg := <-fh.functionOutput:
 			fmt.Println("********Received from channel:", msg)
 			//将数据返回给用户
-			fh.respondWithSuccess(responseWriter,[]byte(msg))
+			body:="The Result is"+msg+"!!!"
+			fh.respondWithSuccess(responseWriter,[]byte(body))
 			start := time.Now()
 		    go fh.collectFunctionMetric(start, request, code)
 			return
