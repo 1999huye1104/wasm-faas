@@ -102,8 +102,8 @@ var (
 	FnSpecializationTimeout = Flag{Type: Int, Name: flagkey.FnSpecializationTimeout, Aliases: []string{"st"}, Usage: "Timeout for executor to wait for function pod creation", DefaultValue: fv1.DefaultSpecializationTimeOut}
 	FnEnvName               = Flag{Type: String, Name: flagkey.FnEnvironmentName, Usage: "Environment name for function"}
 	FnPkgName               = Flag{Type: String, Name: flagkey.FnPackageName, Aliases: []string{"pkg"}, Usage: "Name of the existing package (--deploy and --src and --env will be ignored), should be in the same namespace as the function"}
-	FnImageName             = Flag{Type: String, Name: flagkey.FnCall, Usage: "The method of calling a function includes synchronous and asynchronous"}
-	FnCallMethod             = Flag{Type: String, Name: flagkey.FnImageName, Usage: "Name of the Docker image to be deployed as a function. Valid only when executorType is set to 'container'"}
+	FnCallMethod            = Flag{Type: String, Name: flagkey.FnCall, Usage: "The method of calling a function includes synchronous and asynchronous"}
+	FnImageName             = Flag{Type: String, Name: flagkey.FnImageName, Usage: "Name of the Docker image to be deployed as a function. Valid only when executorType is set to 'container'"}
 	FnPort                  = Flag{Type: Int, Name: flagkey.FnPort, Usage: "Port where the application is running", DefaultValue: 8888}
 	FnCommand               = Flag{Type: String, Name: flagkey.FnCommand, Usage: "Command to be passed to the container. If not specified , the ones defined in the image are used"}
 	FnArgs                  = Flag{Type: String, Name: flagkey.FnArgs, Usage: "Args to be passed to the command on the container. If not specified , the ones defined in the image are used"}
