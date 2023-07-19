@@ -49,6 +49,8 @@ func podInformerHandlers(zapLogger *zap.Logger) k8sCache.ResourceEventHandler {
 			if !isValidFunctionPodOnNode(pod) {
 				zapLogger.Error("not valid Function Pod On Node",
 				zap.String("pod", pod.Name),
+				zap.String("pod.spec.Nodename", pod.Spec.NodeName),
+				zap.String("Node_Name", nodeName ),
 				zap.String("namespace", pod.Namespace))
 				return
 			}
