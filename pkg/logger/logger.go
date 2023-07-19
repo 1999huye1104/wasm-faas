@@ -46,7 +46,10 @@ func podInformerHandlers(zapLogger *zap.Logger) k8sCache.ResourceEventHandler {
 	return k8sCache.ResourceEventHandlerFuncs{
 		AddFunc: func(obj interface{}) {
 			pod := obj.(*corev1.Pod)
-			if !isValidFunctionPodOnNode(pod) || !utils.IsReadyPod(pod) {
+			if !isValidFunctionPodOnNode(pod) {
+				zapLogger.Error("not valid Function Pod On Node",
+				zap.String("pod", pod.Name),
+				zap.String("namespace", pod.Namespace))
 				return
 			}
 			err := createLogSymlinks(zapLogger, pod)
@@ -110,8 +113,7 @@ func isValidFunctionPodOnNode(pod *corev1.Pod) bool {
 	if pod.Spec.NodeName != nodeName {
 		return false
 	}
-	labels := []string{fv1.ENVIRONMENT_NAMESPACE, fv1.ENVIRONMENT_NAME, fv1.ENVIRONMENT_UID,
-		fv1.FUNCTION_NAMESPACE, fv1.FUNCTION_NAME, fv1.FUNCTION_UID, fv1.EXECUTOR_TYPE}
+	labels := []string{fv1.FUNCTION_NAMESPACE, fv1.FUNCTION_NAME, fv1.FUNCTION_UID, fv1.EXECUTOR_TYPE}
 	for _, l := range labels {
 		if len(pod.Labels[l]) == 0 {
 			return false
