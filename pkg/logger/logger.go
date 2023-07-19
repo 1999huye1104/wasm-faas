@@ -72,31 +72,30 @@ func podInformerHandlers(zapLogger *zap.Logger) k8sCache.ResourceEventHandler {
 }
 
 func createLogSymlinks(zapLogger *zap.Logger, pod *corev1.Pod) error {
-	for _, container := range pod.Status.ContainerStatuses {
-		containerUID, err := parseContainerString(container.ContainerID)
-		if err != nil {
-			zapLogger.Error("error parsing container uid",
-				zap.String("container", container.Name),
-				zap.String("pod", pod.Name),
-				zap.String("namespace", pod.Namespace),
-				zap.Error(err))
-			continue
-		}
-		containerLogPath := getLogPath(originalContainerLogPath, pod.Name, pod.Namespace, container.Name, containerUID)
-		symlinkLogPath := getLogPath(fissionSymlinkPath, pod.Name, pod.Namespace, container.Name, containerUID)
+	// for _, container := range pod.Status.ContainerStatuses {
+	// 	containerUID, err := parseContainerString(container.ContainerID)
+	// 	if err != nil {
+	// 		zapLogger.Error("error parsing container uid",
+	// 			zap.String("container", container.Name),
+	// 			zap.String("pod", pod.Name),
+	// 			zap.String("namespace", pod.Namespace),
+	// 			zap.Error(err))
+	// 		continue
+	// 	}
+		containerLogPath := getLogPath(originalContainerLogPath, pod.Name, pod.Namespace)
+		symlinkLogPath := getLogPath(fissionSymlinkPath, pod.Name, pod.Namespace)
 
 		// check whether a symlink exists, if yes then ignore it 相当于是创建对前面的contianerLog符号连接，访问后面symlinklog等于访问前面的路径
 		if _, err := os.Stat(symlinkLogPath); os.IsNotExist(err) {
 			err := os.Symlink(containerLogPath, symlinkLogPath)
 			if err != nil {
 				zapLogger.Error("error creating symlink",
-					zap.String("container", container.Name),
 					zap.String("pod", pod.Name),
 					zap.String("namespace", pod.Namespace),
 					zap.Error(err))
 			}
 		}
-	}
+	// }
 
 	return nil
 }
@@ -129,8 +128,8 @@ func parseContainerString(containerID string) (string, error) {
 	return ID, nil
 }
 
-func getLogPath(pathPrefix, podName, podNamespace, containerName, containerID string) string {
-	logName := fmt.Sprintf("%s_%s_%s-%s.log", podName, podNamespace, containerName, containerID)
+func getLogPath(pathPrefix, podName, podNamespace string) string {
+	logName := fmt.Sprintf("%s-%s.log", podName, podNamespace)
 	return filepath.Join(pathPrefix, logName)
 }
 

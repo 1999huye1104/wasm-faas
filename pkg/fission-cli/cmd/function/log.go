@@ -95,8 +95,8 @@ func (opts *LogSubCommand) do(input cli.Input) error {
 				}
 				for _, logEntry := range logEntries {
 					if input.Bool(flagkey.FnLogDetail) {
-						fmt.Printf("Timestamp: %s\nNamespace: %s\nFunction Name: %s\nFunction ID: %s\nPod: %s\nContainer: %s\nStream: %s\nLog: %s\n---\n",
-							logEntry.Timestamp, logEntry.Namespace, logEntry.FuncName, logEntry.FuncUid, logEntry.Pod, logEntry.Container, logEntry.Stream, logEntry.Message)
+						fmt.Printf("Timestamp: %s\nNamespace: %s\nFunction Name: %s\nFunction ID: %s\nPod:  %s\nStream: %s\nLog: %s\n---\n",
+							logEntry.Timestamp, logEntry.Namespace, logEntry.FuncName, logEntry.FuncUid, logEntry.Pod, logEntry.Stream, logEntry.Message)
 					} else {
 						fmt.Printf("[%s] %s\n", logEntry.Timestamp, logEntry.Message)
 					}

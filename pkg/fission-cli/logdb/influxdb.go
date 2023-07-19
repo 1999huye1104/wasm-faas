@@ -93,8 +93,6 @@ func (influx InfluxDB) GetLogs(filter LogFilter) ([]LogEntry, error) {
 			indexMap := makeIndexMap(series.Columns)
 
 			// TODO: Remove fallback indexes. Some of index's name changed in fluent-bit, here we add extra fallbackIndexes to address compatibility problem.
-			container := indexMap["kubernetes_docker_id"]
-			container_1 := indexMap["docker_container_id"] // for backward compatibility
 			functionName := indexMap["kubernetes_labels_functionName"]
 			funcuid := indexMap["kubernetes_labels_functionUid"]
 			funcuid_1 := indexMap["funcuid"]                         // for backward compatibility
@@ -117,7 +115,6 @@ func (influx InfluxDB) GetLogs(filter LogFilter) ([]LogEntry, error) {
 				entry := LogEntry{
 					//The attributes of the LogEntry are selected as relative to their position in InfluxDB's line protocol response
 					Timestamp: t,
-					Container: getEntryValue(row, container, container_1),
 					FuncName:  getEntryValue(row, functionName, -1),
 					FuncUid:   getEntryValue(row, funcuid, funcuid_1, funcuid_2),
 					Message:   strings.TrimSuffix(getEntryValue(row, logMessage, -1), "\n"), //log field

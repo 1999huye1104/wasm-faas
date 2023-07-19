@@ -43,7 +43,6 @@ type LogEntry struct {
 	Message   string
 	Stream    string
 	Sequence  int
-	Container string
 	Namespace string
 	FuncName  string
 	FuncUid   string
